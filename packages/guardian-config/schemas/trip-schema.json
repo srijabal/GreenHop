@@ -1,0 +1,172 @@
+{
+  "$id": "https://greenhop.com/schemas/trip-verification/1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GreenHop Trip Verification Schema",
+  "description": "Schema for sustainable travel trip data verification",
+  "type": "object",
+  "properties": {
+    "@context": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://schema.org/",
+        "https://greenhop.com/contexts/v1"
+      ]
+    },
+    "type": {
+      "type": "array", 
+      "items": {
+        "type": "string"
+      },
+      "default": ["VerifiableCredential", "GreenHopTripCredential"]
+    },
+    "credentialSubject": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "Subject ID",
+          "description": "DID or account identifier of the trip taker"
+        },
+        "userAccountId": {
+          "type": "string",
+          "title": "User Account ID",
+          "description": "Hedera account ID of the user",
+          "pattern": "^0\\.0\\.[0-9]+$"
+        },
+        "tripType": {
+          "type": "string",
+          "enum": ["walking", "cycling"],
+          "title": "Trip Type",
+          "description": "Type of sustainable transport used"
+        },
+        "startTime": {
+          "type": "number",
+          "title": "Start Time",
+          "description": "Trip start timestamp (Unix milliseconds)",
+          "minimum": 0
+        },
+        "endTime": {
+          "type": "number", 
+          "title": "End Time",
+          "description": "Trip end timestamp (Unix milliseconds)",
+          "minimum": 0
+        },
+        "distance": {
+          "type": "number",
+          "title": "Distance",
+          "description": "Total distance traveled in meters",
+          "minimum": 500,
+          "maximum": 50000
+        },
+        "avgSpeed": {
+          "type": "number",
+          "title": "Average Speed",
+          "description": "Average speed during the trip in km/h", 
+          "minimum": 0.5,
+          "maximum": 15
+        },
+        "coordinates": {
+          "type": "array",
+          "title": "GPS Coordinates",
+          "description": "Array of GPS coordinates with timestamps",
+          "minItems": 2,
+          "maxItems": 1000,
+          "items": {
+            "type": "object",
+            "properties": {
+              "lat": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90,
+                "title": "Latitude"
+              },
+              "lng": {
+                "type": "number", 
+                "minimum": -180,
+                "maximum": 180,
+                "title": "Longitude"
+              },
+              "timestamp": {
+                "type": "number",
+                "minimum": 0,
+                "title": "Timestamp"
+              },
+              "accuracy": {
+                "type": "number",
+                "minimum": 0,
+                "title": "GPS Accuracy (meters)",
+                "description": "Optional GPS accuracy reading"
+              }
+            },
+            "required": ["lat", "lng", "timestamp"]
+          }
+        },
+        "greenTokensEarned": {
+          "type": "number",
+          "title": "Green Tokens Earned",
+          "description": "Number of GREEN tokens earned for this trip",
+          "minimum": 0
+        },
+        "co2Saved": {
+          "type": "number",
+          "title": "CO2 Saved",
+          "description": "Estimated CO2 savings in grams compared to car travel",
+          "minimum": 0
+        },
+        "verificationDate": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Verification Date",
+          "description": "When this trip was verified"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "verified", "rejected"],
+          "title": "Verification Status"
+        }
+      },
+      "required": [
+        "userAccountId",
+        "tripType",
+        "startTime", 
+        "endTime",
+        "distance",
+        "avgSpeed",
+        "coordinates"
+      ]
+    },
+    "issuer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "Issuer ID"
+        },
+        "name": {
+          "type": "string",
+          "default": "GreenHop Verification Service"
+        }
+      },
+      "required": ["id"]
+    },
+    "issuanceDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expirationDate": {
+      "type": "string", 
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "@context",
+    "type", 
+    "credentialSubject",
+    "issuer",
+    "issuanceDate"
+  ]
+}

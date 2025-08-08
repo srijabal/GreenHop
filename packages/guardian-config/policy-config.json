@@ -1,0 +1,204 @@
+{
+  "name": "GreenHop Trip Verification Policy",
+  "version": "1.0.0",
+  "description": "Policy for verifying sustainable travel trips and issuing verifiable credentials",
+  "topicDescription": "GreenHop sustainable travel verification",
+  "config": {
+    "blockType": "policyRolesBlock",
+    "permissions": [
+      "OWNER",
+      "USER"
+    ],
+    "children": [
+      {
+        "blockType": "interfaceContainerBlock",
+        "uiMetaData": {
+          "title": "Trip Verification Interface"
+        },
+        "children": [
+          {
+            "blockType": "requestVcDocumentBlock",
+            "uiMetaData": {
+              "title": "Submit Trip Data",
+              "description": "Submit your sustainable travel trip for verification"
+            },
+            "schema": {
+              "$id": "greenhop-trip-schema",
+              "title": "GreenHop Trip Data",
+              "description": "Schema for sustainable travel trip verification",
+              "type": "object",
+              "properties": {
+                "userAccountId": {
+                  "type": "string",
+                  "title": "User Account ID",
+                  "description": "Hedera account ID of the user"
+                },
+                "tripType": {
+                  "type": "string",
+                  "enum": ["walking", "cycling"],
+                  "title": "Trip Type",
+                  "description": "Type of sustainable transport used"
+                },
+                "startTime": {
+                  "type": "number",
+                  "title": "Start Time",
+                  "description": "Trip start timestamp"
+                },
+                "endTime": {
+                  "type": "number",
+                  "title": "End Time", 
+                  "description": "Trip end timestamp"
+                },
+                "distance": {
+                  "type": "number",
+                  "title": "Distance (meters)",
+                  "description": "Total distance traveled in meters",
+                  "minimum": 500
+                },
+                "avgSpeed": {
+                  "type": "number",
+                  "title": "Average Speed (km/h)",
+                  "description": "Average speed during the trip",
+                  "maximum": 15
+                },
+                "coordinates": {
+                  "type": "array",
+                  "title": "GPS Coordinates",
+                  "description": "Array of GPS coordinates with timestamps",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "lat": {"type": "number"},
+                      "lng": {"type": "number"},
+                      "timestamp": {"type": "number"}
+                    },
+                    "required": ["lat", "lng", "timestamp"]
+                  },
+                  "minItems": 2
+                }
+              },
+              "required": [
+                "userAccountId",
+                "tripType", 
+                "startTime",
+                "endTime",
+                "distance",
+                "avgSpeed",
+                "coordinates"
+              ]
+            }
+          },
+          {
+            "blockType": "sendToGuardianBlock",
+            "dataType": "approve"
+          }
+        ]
+      },
+      {
+        "blockType": "interfaceContainerBlock",
+        "uiMetaData": {
+          "title": "Trip Verification Review"
+        },
+        "children": [
+          {
+            "blockType": "documentsSourceBlock",
+            "children": [
+              {
+                "blockType": "filtersAddonBlock",
+                "filters": [
+                  {
+                    "field": "option.status",
+                    "value": "NEW"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "blockType": "validateBlock",
+            "validationType": "schema",
+            "schemaId": "greenhop-trip-schema"
+          },
+          {
+            "blockType": "calculateMathAddon",
+            "variables": [
+              {
+                "name": "duration",
+                "formula": "((endTime - startTime) / (1000 * 60))"
+              },
+              {
+                "name": "distanceKm", 
+                "formula": "(distance / 1000)"
+              },
+              {
+                "name": "baseReward",
+                "formula": "Math.floor(distanceKm)"
+              },
+              {
+                "name": "typeMultiplier",
+                "formula": "(tripType === 'cycling' ? 1.5 : 1)"
+              },
+              {
+                "name": "greenTokens",
+                "formula": "Math.floor(baseReward * typeMultiplier)"
+              }
+            ]
+          },
+          {
+            "blockType": "conditionalBlock",
+            "conditions": [
+              {
+                "field": "duration",
+                "operator": ">=",
+                "value": 5
+              },
+              {
+                "field": "avgSpeed", 
+                "operator": "<=",
+                "value": 15
+              },
+              {
+                "field": "distance",
+                "operator": ">=", 
+                "value": 500
+              }
+            ],
+            "children": [
+              {
+                "blockType": "mintDocumentBlock",
+                "template": {
+                  "@context": [
+                    "https://www.w3.org/2018/credentials/v1",
+                    "https://schema.org/"
+                  ],
+                  "type": [
+                    "VerifiableCredential",
+                    "GreenHopTripCredential"
+                  ],
+                  "credentialSubject": {
+                    "type": "SustainableTripVerification",
+                    "userAccountId": "${userAccountId}",
+                    "tripType": "${tripType}",
+                    "distance": "${distance}",
+                    "duration": "${duration}",
+                    "avgSpeed": "${avgSpeed}",
+                    "greenTokensEarned": "${greenTokens}",
+                    "verificationDate": "${now}",
+                    "co2Saved": "${Math.round(distanceKm * 0.12)}", // Rough CO2 savings in grams
+                    "status": "verified"
+                  }
+                },
+                "children": [
+                  {
+                    "blockType": "sendToGuardianBlock",
+                    "dataType": "vc-documents"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

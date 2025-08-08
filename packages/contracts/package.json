@@ -1,0 +1,13 @@
+{
+  "name": "@greenhop/contracts",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@hashgraph/sdk": "^2.70.0",
+    "dotenv": "^16.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5"
+  }
+}
