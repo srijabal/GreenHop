@@ -30,7 +30,7 @@ export function HederaWalletConnect() {
       await provider.enable();
       
       const accounts = await provider.request({ method: 'eth_accounts' });
-      if (accounts && accounts.length > 0) {
+      if (accounts) {
         const account = accounts[0];
         setAccountId(account);
         setIsConnected(true);
@@ -49,9 +49,10 @@ export function HederaWalletConnect() {
       setLoading(true);
       setError(null);
 
-      if (typeof window !== 'undefined' && window.ethereum) {
+      if (typeof window !== 'undefined' && (window as any).ethereum) {
         try {
-          await window.ethereum.request({
+          const ethereum = (window as any).ethereum;
+          await ethereum.request({
             method: 'wallet_addEthereumChain',
             params: [{
               chainId: '0x128', // 296 in hex
@@ -69,16 +70,17 @@ export function HederaWalletConnect() {
           console.log('Network already added or user rejected');
         }
 
-        const accounts = await window.ethereum.request({
+        const ethereum = (window as any).ethereum;
+        const accounts = await ethereum.request({
           method: 'eth_requestAccounts',
         });
 
-        if (accounts && accounts.length > 0) {
+        if (accounts) {
           const account = accounts[0];
           setAccountId(account);
           setIsConnected(true);
           
-          setProvider(window.ethereum as any);
+          setProvider((window as any).ethereum as any);
         }
       } else {
         setError('MetaMask is not installed. Please install MetaMask.');
